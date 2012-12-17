@@ -1,0 +1,48 @@
+#!/usr/bin/python
+import os
+import platform
+
+AddOption('--enable-debug',
+        dest='enable_debug',
+        nargs='?', type='string',
+        action='store',
+        const='yes',
+        help='enable debug build')
+build_mode='release'
+if GetOption('enable_debug'):
+    build_mode='debug'
+
+env = Environment()
+
+sources = Split("""
+        LR_cell.cpp
+        Lattice.cpp
+        main.cpp
+        Sachse_fibroblast.cpp
+        IsoSurface.cpp
+        """)
+
+tbb_include = '/usr/include'
+tbb_lib = '/usr/lib'
+gl_include = '/usr/include'
+gl_lib = '/usr/lib'
+env.MergeFlags(['-I'+gl_include, '-L'+gl_lib, '-I'+tbb_include, '-L'+tbb_lib, '-ltbb', '-lglut -lGLU'])
+
+if ('release' == build_mode):
+    env.MergeFlags(['-O3'])
+else:
+    env.MergeFlags(['-O0', '-g'])
+
+
+if ('Linux' == platform.system()):
+    env.MergeFlags(['-DOS_LINUX'])
+elif ('Windows' == platform.system()):
+    env.MergeFlags(['-DOS_WINDOWS'])
+else:
+    raise SCons.Errors.StopError("Unknows target OS")
+
+obj_list = env.Object(source = sources)
+p = env.Program(target = '3Domain_benchmark', source = obj_list)
+inst = env.Install('install',[p])
+
+
